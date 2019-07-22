@@ -16,21 +16,22 @@ Malice ikarus AntiVirus
 
 1. Install [Docker](https://www.docker.com/).
 2. Download [trusted build](https://store.docker.com/community/images/malice/ikarus) from public [docker store](https://store.docker.com): `docker pull malice/ikarus`
+3. Request Demo / Purchase Product via https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/ and download the following files to a folder on your computer: libT3_l64.so, t3cmd.ikkey, t3scan_l64, t3update_l64.
 
 ## Usage
 
 ```
-docker run --rm malice/ikarus EICAR
+docker run --rm -d --shm-size=256m -v IKARUS-BIN-FOLDER:/opt/ikarus malice/ikarus EICAR
 ```
 
 ### Or link your own malware folder:
 
 ```bash
-$ docker run --rm -v /path/to/malware:/malware:ro malice/ikarus FILE
+$ docker run --rm -v IKARUS-BIN-FOLDER:/opt/ikarus -v /path/to/malware:/malware:ro malice/ikarus FILE
 
-Usage: ikarus [OPTIONS] COMMAND [arg...]
+Usage: Ikarus [OPTIONS] COMMAND [arg...]
 
-Malice ikarus AntiVirus Plugin
+Malice Ikarus AntiVirus Plugin
 
 Version: v0.1.0, BuildTime: 20180903
 
