@@ -17,6 +17,7 @@ Malice ikarus AntiVirus
 1. Install [Docker](https://www.docker.com/).
 2. Download [trusted build](https://store.docker.com/community/images/malice/ikarus) from public [docker store](https://store.docker.com): `docker pull malice/ikarus`
 3. Request Demo / Purchase Product via https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/ and download the following files to a folder on your computer: libT3_l64.so, t3cmd.ikkey, t3scan_l64, t3update_l64.
+4. Make sure the downloaded binaries are executable
 
 ## Usage
 
@@ -36,6 +37,8 @@ Malice Ikarus AntiVirus Plugin
 Version: v0.1.0, BuildTime: 20180903
 
 Author:
+  betellen - <https://github.com/betellen>
+  danieljampen - <https://github.com/danieljampen>
   blacktop - <https://github.com/blacktop>
 
 Options:

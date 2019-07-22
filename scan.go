@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/fatih/structs"
@@ -122,7 +122,6 @@ func ParseIkarusOutput(ikarusout string, avErr error) ResultsData {
 	reVdb := regexp.MustCompile(`^\s+VDB:\s+(.*)$`)
 	vdb := reVdb.FindStringSubmatch(lines[2])
 	isVersionInfoOk := vdb != nil && engine != nil
-	
 
 	virusFound := false
 	virusSignatures := 0
@@ -144,20 +143,19 @@ func ParseIkarusOutput(ikarusout string, avErr error) ResultsData {
 	if !isSignatureParsingOk || !isVersionInfoOk {
 		log.Error("[ERROR] when extracting virus scan results from output")
 		log.Errorf("[ERROR] output was: \n%s", ikarusout)
-		return ResultsData{Error: "Unable to parse ikarus output"}		
+		return ResultsData{Error: "Unable to parse ikarus output"}
 	}
 
 	ikarus := ResultsData{
 		Infected: virusFound,
 		Engine:   engine[1],
 		Database: vdb[1],
-		Updated: getUpdatedDate(),
-		Result: virusSignature,
+		Updated:  getUpdatedDate(),
+		Result:   virusSignature,
 	}
 
 	return ikarus
 }
-
 
 func parseUpdatedDate(date string) string {
 	layout := "Mon, 02 Jan 2006 15:04:05 +0000"
@@ -177,17 +175,17 @@ func getUpdatedDate() string {
 func updateAV(ctx context.Context) error {
 	fmt.Println("Updating Ikarus...")
 
-	fmt.Println(utils.RunCommand(ctx, "/opt/ikarus/t3update_l64","-update"))
+	fmt.Println(utils.RunCommand(ctx, "/opt/ikarus/t3update_l64", "-update"))
 
 	// Update UPDATED file
 	t := time.Now().Format("20060102")
-        return ioutil.WriteFile("/opt/malice/UPDATED", []byte(t), 0644)
+	return ioutil.WriteFile("/opt/malice/UPDATED", []byte(t), 0644)
 }
 
 func getLinesOfFileAsArray(path string) []string {
 	updated, err := ioutil.ReadFile(path)
 	assert(err)
-        return strings.Split(string(updated), "\n")
+	return strings.Split(string(updated), "\n")
 }
 
 func didLicenseExpire() bool {
@@ -203,7 +201,7 @@ func didLicenseExpire() bool {
 		if len(line) != 0 {
 			if strings.Contains(line, "enddate") {
 				expireDate := strings.TrimSpace(strings.TrimPrefix(line, "enddate"))
-				t, err := time.Parse("2006-01-02",expireDate)
+				t, err := time.Parse("2006-01-02", expireDate)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -239,6 +237,7 @@ func printStatus(resp gorequest.Response, body string, errs []error) {
 }
 
 func webService() {
+	checkIkarusBinaries()
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/scan", webAvScan).Methods("POST")
 	log.WithFields(log.Fields{
@@ -293,14 +292,37 @@ func webAvScan(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func checkIkarusBinaries() {
+	libFileInfo, err := os.Stat("/opt/ikarus/libT3_l64.so")
+	assert(err)
+
+	if libFileInfo.Mode().Perm()&0001 == 0 {
+		assert(errors.New("libT3_l64.so is not executable! Use chmod +x to fix it!"))
+	}
+
+	scanBinaryFileInfo, err := os.Stat("/opt/ikarus/t3scan_l64")
+	assert(err)
+
+	if scanBinaryFileInfo.Mode().Perm()&0001 == 0 {
+		assert(errors.New("t3scan_l64 is not executable! Use chmod +x to fix it!"))
+	}
+
+	updateBinaryFileInfo, err := os.Stat("/opt/ikarus/t3update_l64")
+	assert(err)
+
+	if updateBinaryFileInfo.Mode().Perm()&0001 == 0 {
+		assert(errors.New("t3update_l64 is not executable! Use chmod +x to fix it!"))
+	}
+}
+
 func main() {
-	
+
 	cli.AppHelpTemplate = utils.AppHelpTemplate
 	app := cli.NewApp()
 
 	app.Name = "ikarus"
-	app.Author = "tebe"
-	app.Email = "https://github.com/TODO"
+	app.Author = "betellen, danieljampen, blacktop"
+	app.Email = "https://github.com/malice-plugins/ikarus"
 	app.Version = Version + ", BuildTime: " + BuildTime
 	app.Compiled, _ = time.Parse("20060102", BuildTime)
 	app.Usage = "Malice Ikarus AntiVirus Plugin"
@@ -370,6 +392,8 @@ func main() {
 			if _, err = os.Stat(path); os.IsNotExist(err) {
 				assert(err)
 			}
+
+			checkIkarusBinaries()
 
 			if didLicenseExpire() {
 				log.Errorln("Ikarus license has expired")
