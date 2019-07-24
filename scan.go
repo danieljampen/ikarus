@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -40,6 +41,9 @@ var (
 
 	// es is the elasticsearch database object
 	es elasticsearch.Database
+
+	// mutex for update handling
+	updateMutex sync.RWMutex
 )
 
 type pluginResults struct {
@@ -80,6 +84,14 @@ func AvScan(timeout int) Ikarus {
 
 	var output string
 	var avErr error
+
+	updateMutex.Lock()
+	updatedDate := getUpdatedDate()
+	if updatedDate == "" {
+		log.Debug("performing initial update...")
+		updateAV(nil)
+	}
+	updateMutex.Unlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
@@ -165,7 +177,7 @@ func parseUpdatedDate(date string) string {
 
 func getUpdatedDate() string {
 	if _, err := os.Stat("/opt/malice/UPDATED"); os.IsNotExist(err) {
-		return BuildTime
+		return ""
 	}
 	updated, err := ioutil.ReadFile("/opt/malice/UPDATED")
 	assert(err)

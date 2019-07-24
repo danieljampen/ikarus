@@ -20,8 +20,9 @@ Malice ikarus AntiVirus
 
 1. Install [Docker](https://www.docker.com/).
 2. Download [trusted build](https://store.docker.com/community/images/malice/ikarus) from public [docker store](https://store.docker.com): `docker pull malice/ikarus`
-3. Request demo (https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/) and download the provided files to a folder on your server. The following files will be provided by ikarus: libT3_l64.so, t3cmd.ikkey, t3scan_l64, t3update_l64.
+3. Request demo (https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/) and download the provided files to a folder on your server (now refered to as IKARUS-BIN-FOLDER). The following files will be provided by ikarus: libT3_l64.so, t3cmd.ikkey, t3scan_l64, t3update_l64.
 4. Make sure the downloaded binaries are executable: chmod +x /ikarus/*
+5. **[Optional]** If you plan to start the container often, e.g. if you create a new container for each scan, make sure to update the ikarus definitions at least once before use! This way the database won't be updated before each scan what in return reduces the scan time. You can do this by updating the container (see [here]) or by manuall calling the update binary `t3update_l64 -update` in your IKARUS-BIN-FOLDER.
 
 ## Usage
 
