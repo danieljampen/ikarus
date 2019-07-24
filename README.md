@@ -14,27 +14,33 @@ Malice ikarus AntiVirus
 
 ## Installation
 
+
+> **NOTE:** :warning: Requires license key and non public ikarus binaries. Request free trial at: - https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/
+
+
 1. Install [Docker](https://www.docker.com/).
 2. Download [trusted build](https://store.docker.com/community/images/malice/ikarus) from public [docker store](https://store.docker.com): `docker pull malice/ikarus`
-3. Request Demo / Purchase Product via https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/ and download the following files to a folder on your computer: libT3_l64.so, t3cmd.ikkey, t3scan_l64, t3update_l64.
-4. Make sure the downloaded binaries are executable
+3. Request demo (https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/) and download the provided files to a folder on your server. The following files will be provided by ikarus: libT3_l64.so, t3cmd.ikkey, t3scan_l64, t3update_l64.
+4. Make sure the downloaded binaries are executable: chmod +x /ikarus/*
 
 ## Usage
 
 ```
 docker run --rm -d --shm-size=256m -v IKARUS-BIN-FOLDER:/opt/ikarus malice/ikarus EICAR
 ```
+**NOTE** As the ikarus binaries are not public, they are not included in the docker image and must be mounted into the container using `-v IKARUS-BIN-FOLDER:/opt/ikarus`.
+
 
 ### Or link your own malware folder:
 
 ```bash
-$ docker run --rm -v IKARUS-BIN-FOLDER:/opt/ikarus -v /path/to/malware:/malware:ro malice/ikarus FILE
+$ docker run --rm --shm-size=256m -v IKARUS-BIN-FOLDER:/opt/ikarus -v /path/to/malware:/malware:ro malice/ikarus FILE
 
 Usage: Ikarus [OPTIONS] COMMAND [arg...]
 
 Malice Ikarus AntiVirus Plugin
 
-Version: v0.1.0, BuildTime: 20180903
+Version: v0.1.0, BuildTime: 20190724
 
 Author:
   betellen - <https://github.com/betellen>
@@ -70,7 +76,7 @@ Run 'ikarus COMMAND --help' for more information on a command.
     "result": "EICAR Test-NOT virus!!!",
     "engine": "2.1.2",
     "database": "17012800",
-    "updated": "20170129"
+    "updated": "20190724"
   }
 }
 ```
@@ -83,18 +89,9 @@ Run 'ikarus COMMAND --help' for more information on a command.
 
 | Infected | Result                  | Engine | Updated  |
 | -------- | ----------------------- | ------ | -------- |
-| true     | EICAR Test-NOT virus!!! | 2.1.2  | 20170129 |
+| true     | EICAR Test-NOT virus!!! | 2.1.2  | 20190724 |
 
 ---
-
-> **NOTE:** :warning: Requires license key and non public ikarus binaries. Request demo at: - https://www.ikarussecurity.com/solutions/trials/demo-license-for-ikarus-antivirus/
-> 
-> make sure to copy the following files you'll receive from ikarus security to the container's /opt/ikarus directory:
-> * libT3_l64.so
-> * t3cmd.ikkey
-> * t3scan_l64
-> * t3update_l64
-
 ## Documentation
 
 - [To write results to ElasticSearch](https://github.com/malice-plugins/ikarus/blob/master/docs/elasticsearch.md)

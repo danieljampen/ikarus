@@ -297,21 +297,21 @@ func checkIkarusBinaries() {
 	assert(err)
 
 	if libFileInfo.Mode().Perm()&0001 == 0 {
-		assert(errors.New("libT3_l64.so is not executable! Use chmod +x to fix it!"))
+		assert(errors.New("libT3_l64.so is not executable. Use chmod +x to fix it"))
 	}
 
 	scanBinaryFileInfo, err := os.Stat("/opt/ikarus/t3scan_l64")
 	assert(err)
 
 	if scanBinaryFileInfo.Mode().Perm()&0001 == 0 {
-		assert(errors.New("t3scan_l64 is not executable! Use chmod +x to fix it!"))
+		assert(errors.New("t3scan_l64 is not executable. Use chmod +x to fix it"))
 	}
 
 	updateBinaryFileInfo, err := os.Stat("/opt/ikarus/t3update_l64")
 	assert(err)
 
 	if updateBinaryFileInfo.Mode().Perm()&0001 == 0 {
-		assert(errors.New("t3update_l64 is not executable! Use chmod +x to fix it!"))
+		assert(errors.New("t3update_l64 is not executable. Use chmod +x to fix it"))
 	}
 }
 
