@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -41,9 +40,6 @@ var (
 
 	// es is the elasticsearch database object
 	es elasticsearch.Database
-
-	// mutex for update handling
-	updateMutex sync.RWMutex
 )
 
 type pluginResults struct {
@@ -84,14 +80,6 @@ func AvScan(timeout int) Ikarus {
 
 	var output string
 	var avErr error
-
-	updateMutex.Lock()
-	updatedDate := getUpdatedDate()
-	if updatedDate == "" {
-		log.Debug("performing initial update...")
-		updateAV(nil)
-	}
-	updateMutex.Unlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
@@ -151,9 +139,10 @@ func ParseIkarusOutput(ikarusout string, avErr error) ResultsData {
 			virusFound = true
 		}
 	}
-	isSignatureParsingOk := (virusSignatures == 0 && !virusFound || virusSignatures == 1 && virusFound)
+	isSignatureParsingOk := (virusSignatures == 0 && !virusFound || virusSignatures >= 1 && virusFound)
 	if !isSignatureParsingOk || !isVersionInfoOk {
 		log.Error("[ERROR] when extracting virus scan results from output")
+		//log.Errorf("[ERROR] variables: \nvirusSignature: %s\nvirusSignatures: %s\nvirusFound: %s\nisVersionInfoOk %s", virusSignature, virusSignatures, virusFound, isVersionInfoOk)
 		log.Errorf("[ERROR] output was: \n%s", ikarusout)
 		return ResultsData{Error: "Unable to parse ikarus output"}
 	}
@@ -177,7 +166,7 @@ func parseUpdatedDate(date string) string {
 
 func getUpdatedDate() string {
 	if _, err := os.Stat("/opt/malice/UPDATED"); os.IsNotExist(err) {
-		return ""
+		return BuildTime
 	}
 	updated, err := ioutil.ReadFile("/opt/malice/UPDATED")
 	assert(err)
@@ -249,7 +238,6 @@ func printStatus(resp gorequest.Response, body string, errs []error) {
 }
 
 func webService() {
-	checkIkarusBinaries()
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/scan", webAvScan).Methods("POST")
 	log.WithFields(log.Fields{
@@ -304,37 +292,14 @@ func webAvScan(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkIkarusBinaries() {
-	libFileInfo, err := os.Stat("/opt/ikarus/libT3_l64.so")
-	assert(err)
-
-	if libFileInfo.Mode().Perm()&0001 == 0 {
-		assert(errors.New("libT3_l64.so is not executable. Use chmod +x to fix it"))
-	}
-
-	scanBinaryFileInfo, err := os.Stat("/opt/ikarus/t3scan_l64")
-	assert(err)
-
-	if scanBinaryFileInfo.Mode().Perm()&0001 == 0 {
-		assert(errors.New("t3scan_l64 is not executable. Use chmod +x to fix it"))
-	}
-
-	updateBinaryFileInfo, err := os.Stat("/opt/ikarus/t3update_l64")
-	assert(err)
-
-	if updateBinaryFileInfo.Mode().Perm()&0001 == 0 {
-		assert(errors.New("t3update_l64 is not executable. Use chmod +x to fix it"))
-	}
-}
-
 func main() {
 
 	cli.AppHelpTemplate = utils.AppHelpTemplate
 	app := cli.NewApp()
 
 	app.Name = "ikarus"
-	app.Author = "betellen, danieljampen, blacktop"
-	app.Email = "https://github.com/malice-plugins/ikarus"
+	app.Author = "tebe"
+	app.Email = "https://github.com/TODO"
 	app.Version = Version + ", BuildTime: " + BuildTime
 	app.Compiled, _ = time.Parse("20060102", BuildTime)
 	app.Usage = "Malice Ikarus AntiVirus Plugin"
@@ -404,8 +369,6 @@ func main() {
 			if _, err = os.Stat(path); os.IsNotExist(err) {
 				assert(err)
 			}
-
-			checkIkarusBinaries()
 
 			if didLicenseExpire() {
 				log.Errorln("Ikarus license has expired")
